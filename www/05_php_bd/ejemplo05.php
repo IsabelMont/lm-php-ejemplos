@@ -3,27 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Ejemplo 5</title>
-    <link rel="stylesheet" href="css/normalize.css"/>
-    <link rel="stylesheet" href="css/estilos.css"/>
+    <link rel="stylesheet" href="../css/normalize.css"/>
+    <link rel="stylesheet" href="../css/estilos.css"/>
 </head>
 <body>
 
 <h1>Insertar una fila en una tabla de MySQL</h1>
-<p>Se conecta a una base de datos llamada "blog" en la máquina "localhost",
-    con el usuario "root" y sin contraseña.</p>
+<p>Se conecta a una base de datos llamada "blog" en la máquina "bd", con el usuario
+    "blog".</p>
 <p>Inserta un nuevo post en la tabla "entrada".</p>
 <p>No hace comprobación de errores.</p>
 
 <h2>Nuevo post</h2>
 
 <?php
-// date_default_timezone... es obligatorio si usais PHP 5.3 o superior
 date_default_timezone_set('Europe/Madrid');
 $fecha_actual = date("Y-m-d H:i:s");
 ?>
 
-
-<form action="ejemplo20.php" method="get">
+<form action="ejemplo05.php" method="POST">
     <div>
         <label for="titulo">Título:</label>
         <input type="text" id="titulo" name="titulo" value=""/>
@@ -34,7 +32,7 @@ $fecha_actual = date("Y-m-d H:i:s");
     </div>
     <div>
         <label for="fecha">Fecha:</label>
-        <input type="text" id="fecha" name="fecha" value="<?php echo $fecha_actual; ?>"/>
+        <input type="date" id="fecha" name="fecha" value="<?php echo $fecha_actual; ?>"/>
     </div>
     <div>
         <label for="activo">Activo:</label>
@@ -46,72 +44,65 @@ $fecha_actual = date("Y-m-d H:i:s");
     </div>
 </form>
 
-<?php if (isset($_GET['enviar'])) { ?>
+<?php if (isset($_POST['enviar'])) { ?>
 
     <?php
     // Recoger los valores
     $titulo = "";
-    if (isset($_GET['titulo']))
-        $titulo = $_GET['titulo'];
+    if (isset($_POST['titulo']))
+        $titulo = $_POST['titulo'];
 
     $texto = "";
-    if (isset($_GET['texto']))
-        $texto = $_GET['texto'];
+    if (isset($_POST['texto']))
+        $texto = $_POST['texto'];
 
     $fecha = $fecha_actual;
-    if (isset($_GET['fecha']) && $_GET['fecha'] != "")
-        $fecha = $_GET['fecha'];
+    if (isset($_POST['fecha']) && $_POST['fecha'] != "")
+        $fecha = $_POST['fecha'];
 
     $activo = 0;
-    if (isset($_GET['activo']))
+    if (isset($_POST['activo']))
         $activo = 1;
     ?>
 
     <?php
     // Abrir la conexión
-    $conexion = mysql_connect("localhost", "root", "");
-
-    // Elegir la base de datos
-    mysql_select_db("blog", $conexion);
+    $conexion = mysqli_connect("bd", "blog", "12345Abcde", "blog");
 
     // Formar la consulta (insertar una fila)
-
-    /*
-      $q = "insert into entrada values( 0, '', '', '', '' )";
-      Cortar en los puntos en los que queremos introducir variables con ".."
-      $q = "insert into entrada values( 0, '".$titulo."', '".$texto."', '".$fecha."', '".$activo."' )";
-      echo $q;
-    */
-
-    //$q = "insert into entrada values( 0, '', '', '', '' )";
-    //$q = "insert into entrada values( 0, '".$titulo."', '', '', '' )";
-    //$q = "insert into entrada values( 0, '".$titulo."','".$texto."', '', '' )";
-
-    $q = "insert into entrada values ( 0,'" . $titulo . "','" . $texto . "','" . $fecha . "','" . $activo . "' )";
+    $query = "insert into entrada values ( 0,'$titulo','$texto','$fecha',$activo )";
 
     // Ejecutar la consulta en la conexión abierta. No hay "resultset"
-    mysql_query($q, $conexion) or die(mysql_error());
+    mysqli_query($conexion, $query) or die(mysqli_error($conexion));
 
     // Formar la consulta (seleccionando todas las filas)
-    $q = "select * from entrada";
+    $query = "select * from entrada";
 
     // Ejecutar la consulta en la conexión abierta y obtener el "resultset"
-    $r = mysql_query($q, $conexion) or die(mysql_error());
+    $resultset = mysqli_query($conexion, $query) or die(mysqli_error($conexion));
 
     // Calcular el número de filas
-    $total = mysql_num_rows($r);
+    $total = mysqli_num_rows($resultset);
 
-    // Mostrar el contenido de las filas
+    // Mostrar el contenido de las filas, creando una tabla HTML
     if ($total > 0) {
-        while ($fila = mysql_fetch_assoc($r)) {
-            echo "<br /><strong>" . $fila['titulo'] . "</strong><br />";
-            echo "Texto: " . $fila['texto'] . "<br />";
-            echo "Fecha: " . $fila['fecha'] . "<br />";
+        echo '<table border="1">';
+        echo '<tr><th>Título</th><th>Texto</th><th>Fecha</th><th>Activo</th></tr>';
+
+        while ($fila = mysqli_fetch_assoc($resultset)) {
+            echo "<tr>";
+            echo "<td>" . $fila['titulo'] . "</td>";
+            echo "<td>" . $fila['texto'] . "</td>";
+            echo "<td>" . $fila['fecha'] . "</td>";
+            echo "<td>" . $fila['activo'] . "</td>";
+            echo "</tr>";
         }
+
+        echo '</table>';
     }
 
     // Cerrar la conexión
-    mysql_close($conexion);
+    mysqli_close($conexion);
     ?>
 
 <?php } ?>
